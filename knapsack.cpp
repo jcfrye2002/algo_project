@@ -4,113 +4,76 @@
 
 using namespace std;
 
-int knapsack_variant(int n, int W, int l, vector<int> &weights, vector<int> &values)
-{
-    vector<vector<vector<int>>> OPT(n + 1, vector<vector<int>>(W + 1, vector<int>(l + 1, 0)));
+//n = number of items, W = total weight capacity, l = subset size
+vector<int> KnapsackVariant(int n, int W, int l, const vector<int>& weights, const vector<int>& values) {
+    vector<vector<vector<int>>> OPT(n + 1, vector<vector<int>>(W + 1, vector<int>(l + 1, 0))); //create vector to store subproblem solutions
 
-    for (int i = 1; i <= n; ++i)
-    {
-        for (int w = 0; w <= W; ++w)
-        {
-            for (int k = 0; k <= l; ++k)
-            {
-                // Base cases
-                if (i < k || w == 0 || k == 0)
-                {
-                    OPT[i][w][k] = 0;
-                }
-                else if (weights[i - 1] == w && k == 1)
-                {
-                    OPT[i][w][k] = max(OPT[i - 1][w][k], values[i - 1]);
-                }
-                else if (weights[i - 1] <= w && k > 1)
-                {
-                    OPT[i][w][k] = max(OPT[i - 1][w][k], values[i - 1] + OPT[i - 1][w - weights[i - 1]][k - 1]);
-                }
-                else
-                {
-                    OPT[i][w][k] = OPT[i - 1][w][k];
+    // fill matrix using bottom-up dynamic programming
+    for (int i = 1; i <= n; ++i) { //iterates over the number of items
+        for (int w = 1; w <= W; ++w) { //iterates over weight capacity
+            for (int k = 1; k <= l; ++k) {//iterates over subset size
+                if (weights[i - 1] > w || k > i) {
+                    OPT[i][w][k] = OPT[i - 1][w][k];//if weight of the current item greater than current total weight (w) OR if subset size (k)
+                    // is greater than the current item index (i), then it sets OPT[i][w][k] to the value obtained without including the current item (OPT[i - 1][w][k]).
+                } else {
+                    OPT[i][w][k] = max(OPT[i - 1][w][k], values[i - 1] + OPT[i - 1][w - weights[i - 1]][k - 1]); //If conditions are not met current item can be included in the subset.                
                 }
             }
         }
     }
 
-    // Check if a solution exists
-    if (OPT[n][W][l] == 0)
-    {
-        cout << "No solution exists." << endl;
-        return 0;
+    //if a solution doesn't exist
+    if (OPT[n][W][l] == 0) {
+        cout << "No subset exists with the given constraints." << endl;
+        return {};
     }
 
-    // Traceback to find the selected items
-    int i = n, w = W, k = l;
-    vector<int> selected_items;
-
-    while (i > 0 && w > 0 && k > 0)
-    {
-        if (weights[i - 1] == w && k == 1)
-        {
-            selected_items.push_back(i);
-            break;
-        }
-        else if (OPT[i][w][k] != OPT[i - 1][w][k])
-        {
-            selected_items.push_back(i);
+    // Traceback function
+    vector<int> subset; //creates vector to return subset
+    int i = n, w = W, k = l; //initlize variables to values at end of dynamic programming process
+    while (i > 0 && w > 0 && k > 0) { //while items > 0, weight capacity is positive, remaining subset size is positive
+        if (OPT[i][w][k] != OPT[i - 1][w][k]) { //checks if current item is in optimal soution, if not equal current item was included
+            subset.push_back(i);
             w -= weights[i - 1];
             k--;
         }
         i--;
     }
 
-    // Output the selected items and their values and weights
-    cout << "Selected items:" << endl;
-    for (int i = selected_items.size() - 1; i >= 0; --i)
-    {
-        int item_index = selected_items[i] - 1;
-        cout << "Item " << selected_items[i] << ": Value = " << values[item_index]
-             << ", Weight = " << weights[item_index] << endl;
-    }
-
-    // Output the maximum value of the subset
-    cout << "Maximum value of a subset: " << OPT[n][W][l] << endl;
-
-    return OPT[n][W][l];
+    return subset;
 }
 
-int main()
-{
-    while (true)
-    {
-        int n, W, l;
-        cout << "Enter the number of items (enter 0 to exit): ";
-        cin >> n;
+int main() {
+    int n, W, l;
 
-        if (n == 0)
-        {
-            break; // Exit the program if the user enters 0
+    // input item number, weight, and subset size
+    cout << "Enter the number of items: ";
+    cin >> n;
+    cout << "Enter the total weight: ";
+    cin >> W;
+    cout << "Enter the subset size: ";
+    cin >> l;
+
+    // input weights and values
+    vector<int> weights(n), values(n);
+    cout << "Enter weights of the items: ";
+    for (int i = 0; i < n; ++i) {
+        cin >> weights[i];
+    }
+    cout << "Enter values of the items: ";
+    for (int i = 0; i < n; ++i) {
+        cin >> values[i];
+    }
+
+    vector<int> optimalSubset = KnapsackVariant(n, W, l, weights, values); //call function solution
+
+    //print solution
+    if (!optimalSubset.empty()) {
+        cout << "Optimal Subset: ";
+        for (int i = optimalSubset.size() - 1; i >= 0; --i) {
+            cout << optimalSubset[i] << " ";
         }
-
-        vector<int> weights(n), values(n);
-
-        cout << "Enter the weights of items: ";
-        for (int i = 0; i < n; ++i)
-        {
-            cin >> weights[i];
-        }
-
-        cout << "Enter the values of items: ";
-        for (int i = 0; i < n; ++i)
-        {
-            cin >> values[i];
-        }
-
-        cout << "Enter the total weight (W): ";
-        cin >> W;
-
-        cout << "Enter the number of items in the subset (l): ";
-        cin >> l;
-
-        knapsack_variant(n, W, l, weights, values);
+        cout << endl;
     }
 
     return 0;
