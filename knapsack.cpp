@@ -9,7 +9,7 @@ using namespace std;
 void knapsack_variant(int n, int W, int l, vector<int> &weights, vector<int> &values)
 {
 
-    vector<vector<vector<int>>> OPT(n, vector<vector<int>>(W, vector<int>(l, 0))); //matrix to store subsets
+    vector<vector<vector<int>>> OPT(n, vector<vector<int>>(W, vector<int>(l, 0))); //matrix to store subsets +1 for the case of 0
 
     //populate matrix
     for (int i = 0; i < n; ++i) //number of items
